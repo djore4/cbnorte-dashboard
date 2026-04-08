@@ -148,14 +148,14 @@
 // SUBSTITUIR com o teu GitHub Gist raw URL após criar o Gist
 // Formato: https://gist.githubusercontent.com/USERNAME/GIST_ID/raw/negocios.json
 // ─────────────────────────────────────────────────────────────────────────────
-const GIST_URL = 'https://gist.githubusercontent.com/djore4/3e9ad92cbf38db9c20d704a4ca334b03/raw/abf4556991688656195e5d1c8b02904ff2970467/negocios.json';
+const GIST_URL = 'https://gist.githubusercontent.com/djore4/3e9ad92cbf38db9c20d704a4ca334b03/raw/negocios.json';
 
 let all = [], cur = 'all', ch = {};
 
 async function loadData() {
   show('loading');
   try {
-    if (GIST_URL === 'SEU_GIST_RAW_URL_AQUI') throw new Error('GIST_URL não configurado. Segue o SETUP.md.');
+    if (GIST_URL === 'https://gist.githubusercontent.com/djore4/3e9ad92cbf38db9c20d704a4ca334b03/raw/abf4556991688656195e5d1c8b02904ff2970467/negocios.json') throw new Error('GIST_URL não configurado. Segue o SETUP.md.');
     const r = await fetch(GIST_URL + '?t=' + Date.now());
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
