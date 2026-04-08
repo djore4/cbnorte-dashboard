@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CB Norte — Negócios</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f0f0f; --surface: #181818;
+      --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
+      --text: #f0f0f0; --muted: #777;
+      --blue: #3b82f6; --green: #10b981; --amber: #f59e0b;
+      --font: 'IBM Plex Sans', sans-serif; --mono: 'IBM Plex Mono', monospace;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.6; min-height: 100vh; }
+
+    header {
+      border-bottom: 1px solid var(--border); padding: 0 1.25rem; height: 52px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; background: rgba(15,15,15,.94); backdrop-filter: blur(8px); z-index: 100;
+    }
+    .logo { font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: .1em; display: flex; align-items: center; gap: 9px; }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: blink 2s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .ts { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+    .btn-sm { font-family: var(--mono); font-size: 10px; letter-spacing: .04em; padding: 5px 12px; border-radius: 3px; border: 1px solid var(--border2); background: transparent; color: var(--muted); cursor: pointer; transition: .15s; }
+    .btn-sm:hover { color: var(--text); }
+
+    main { max-width: 1180px; margin: 0 auto; padding: 1.5rem 1.25rem 4rem; }
+
+    #loading { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 14px; text-align: center; }
+    .spinner { width: 28px; height: 28px; border: 2px solid var(--border2); border-top-color: var(--blue); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #error-box { display:none; text-align:center; padding: 3rem 1rem; }
+    .err-title { font-size: 18px; margin-bottom: 8px; }
+    .err-sub { color: var(--muted); font-size: 13px; max-width: 440px; margin: 0 auto; line-height: 1.7; }
+    .err-code { font-family: var(--mono); font-size: 11px; background: var(--surface); padding: 8px 14px; border-radius: 4px; margin-top: 12px; display: inline-block; color: var(--amber); border: 1px solid var(--border2); }
+
+    .top-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 1.25rem; }
+    .period-label { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: .07em; text-transform: uppercase; }
+    .filters { display: flex; gap: 5px; flex-wrap: wrap; }
+    .f-btn { font-family: var(--mono); font-size: 10px; padding: 4px 10px; border-radius: 3px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: .13s; }
+    .f-btn.on { border-color: var(--blue); color: var(--blue); background: rgba(59,130,246,.07); }
+    .f-btn:hover:not(.on) { color: var(--text); border-color: var(--border2); }
+
+    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom: 1rem; }
+    .metric { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; }
+    .m-label { font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 5px; }
+    .m-val { font-size: 28px; font-weight: 300; line-height: 1; }
+    .m-sub { font-family: var(--mono); font-size: 9px; color: var(--muted); margin-top: 3px; }
+    .c-blue { color: var(--blue); } .c-green { color: var(--green); } .c-amber { color: var(--amber); }
+
+    .flags { display: flex; flex-direction: column; gap: 7px; margin-bottom: 1rem; }
+    .flag { display: flex; align-items: flex-start; gap: 9px; background: rgba(245,158,11,.05); border: 1px solid rgba(245,158,11,.18); border-radius: 5px; padding: 9px 13px; font-size: 12px; color: #ca8a04; }
+
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    @media (max-width: 680px) { .grid2 { grid-template-columns: 1fr; } }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 18px; margin-bottom: 10px; }
+    .c-label { font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 14px; }
+    .chart-wrap { position: relative; width: 100%; }
+
+    .t-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead tr { border-bottom: 1px solid var(--border2); }
+    th { font-family: var(--mono); font-size: 9px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); padding: 8px 10px; text-align: left; font-weight: 400; white-space: nowrap; }
+    td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: rgba(255,255,255,.02); }
+    .t-rank { font-family: var(--mono); color: var(--muted); font-size: 11px; width: 28px; }
+    .t-name { font-weight: 500; white-space: nowrap; }
+    .t-email { font-family: var(--mono); font-size: 10px; color: var(--muted); white-space: nowrap; }
+    .t-count { font-family: var(--mono); font-weight: 500; color: var(--blue); text-align: right; }
+    .t-trend { font-family: var(--mono); font-size: 13px; text-align: center; }
+    .bar-col { width: 90px; }
+    .bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .bar-fill { height: 100%; background: var(--blue); border-radius: 2px; }
+
+    footer { text-align: center; padding: 2rem 1rem; font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing: .05em; border-top: 1px solid var(--border); margin-top: 1rem; }
+
+    #dashboard { display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span class="live-dot"></span>CB NORTE — NEGÓCIOS</div>
+  <div class="header-right">
+    <span class="ts" id="ts">—</span>
+    <button class="btn-sm" onclick="loadData()">↻ Atualizar</button>
+  </div>
+</header>
+
+<main>
+  <div id="loading">
+    <div class="spinner"></div>
+    <div style="font-size:15px">A carregar negócios...</div>
+  </div>
+
+  <div id="error-box">
+    <div class="err-title">Sem dados disponíveis</div>
+    <div class="err-sub" id="err-msg">Não foi possível carregar os dados.</div>
+    <button class="btn-sm" onclick="loadData()" style="margin-top:14px">Tentar novamente</button>
+  </div>
+
+  <div id="dashboard">
+    <div class="top-row">
+      <span class="period-label" id="period"></span>
+      <div class="filters">
+        <button class="f-btn on" onclick="setF('all',this)">Todos</button>
+        <button class="f-btn" onclick="setF('month',this)">Este mês</button>
+        <button class="f-btn" onclick="setF('last',this)">Mês anterior</button>
+      </div>
+    </div>
+    <div class="metrics" id="metrics"></div>
+    <div class="flags" id="flags"></div>
+    <div class="grid2">
+      <div class="card">
+        <div class="c-label">Negócios por vendedor</div>
+        <div class="chart-wrap" id="seller-wrap"><canvas id="c-seller" role="img" aria-label="Negócios por vendedor"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="c-label">Distribuição por dia</div>
+        <div class="chart-wrap" style="height:280px"><canvas id="c-time" role="img" aria-label="Negócios por dia"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="c-label">Ranking de vendedores</div>
+      <div class="t-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Vendedor</th><th>Email</th><th style="text-align:right">Neg.</th><th style="text-align:center">↕</th><th class="bar-col">Volume</th></tr></thead>
+          <tbody id="t-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>CAETANO BAVIERA NORTE · DADOS VIA POWER AUTOMATE</footer>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// SUBSTITUIR com o teu GitHub Gist raw URL após criar o Gist
+// Formato: https://gist.githubusercontent.com/USERNAME/GIST_ID/raw/negocios.json
+// ─────────────────────────────────────────────────────────────────────────────
+const GIST_URL = 'https://gist.githubusercontent.com/djore4/3e9ad92cbf38db9c20d704a4ca334b03/raw/abf4556991688656195e5d1c8b02904ff2970467/negocios.json';
+
+let all = [], cur = 'all', ch = {};
+
+async function loadData() {
+  show('loading');
+  try {
+    if (GIST_URL === 'SEU_GIST_RAW_URL_AQUI') throw new Error('GIST_URL não configurado. Segue o SETUP.md.');
+    const r = await fetch(GIST_URL + '?t=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    all = (data.deals || []).map(d => ({ ...d, date: new Date(d.date) }));
+    if (!all.length) throw new Error('Gist sem dados ainda. O Power Automate ainda não enviou nenhum negócio.');
+    document.getElementById('ts').textContent = 'Actual. ' + new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+    show('dashboard');
+    render(filtered());
+  } catch(e) {
+    document.getElementById('err-msg').textContent = e.message;
+    show('error');
+  }
+}
+
+function setF(f,btn) { cur=f; document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); render(filtered()); }
+
+function filtered() {
+  const now=new Date(), ms=new Date(now.getFullYear(),now.getMonth(),1), ls=new Date(now.getFullYear(),now.getMonth()-1,1);
+  if(cur==='month') return all.filter(d=>d.date>=ms);
+  if(cur==='last')  return all.filter(d=>d.date>=ls&&d.date<ms);
+  return all;
+}
+
+function bySeller(deals) {
+  const m={};
+  for(const d of deals){ if(!m[d.sender])m[d.sender]={name:d.senderName,count:0}; m[d.sender].count++; }
+  return Object.entries(m).map(([e,v])=>({email:e,...v})).sort((a,b)=>b.count-a.count);
+}
+
+function render(deals) {
+  const sc = bySeller(deals);
+  // Period
+  if(deals.length){ const dates=deals.map(x=>x.date), mn=new Date(Math.min(...dates)), mx=new Date(Math.max(...dates)); const f=d=>d.toLocaleDateString('pt-PT',{day:'2-digit',month:'short'}); document.getElementById('period').textContent=f(mn)+' – '+f(mx)+' '+mx.getFullYear(); }
+  // Metrics
+  const days=new Set(deals.map(d=>d.date.toDateString())).size, avg=days?(deals.length/days).toFixed(1):0, top=sc[0];
+  document.getElementById('metrics').innerHTML=`
+    <div class="metric"><div class="m-label">Total</div><div class="m-val c-blue">${deals.length}</div><div class="m-sub">negócios</div></div>
+    <div class="metric"><div class="m-label">Vendedores</div><div class="m-val">${sc.length}</div><div class="m-sub">activos</div></div>
+    <div class="metric"><div class="m-label">Dias activos</div><div class="m-val">${days}</div><div class="m-sub">dias</div></div>
+    <div class="metric"><div class="m-label">Média/dia</div><div class="m-val c-green">${avg}</div><div class="m-sub">negócios</div></div>
+    ${top?`<div class="metric"><div class="m-label">Líder</div><div class="m-val c-amber" style="font-size:17px;margin-top:4px">${top.name.split(' ')[0]}</div><div class="m-sub">${top.count} neg.</div></div>`:''}
+  `;
+  // Flags
+  const map={}; for(const d of deals){const k=d.sender+'|'+d.date.toDateString();map[k]=(map[k]||0)+1;}
+  document.getElementById('flags').innerHTML=Object.entries(map).filter(([,n])=>n>=8).map(([k,n])=>{const[em,dy]=k.split('|');const nm=deals.find(d=>d.sender===em)?.senderName||em;return`<div class="flag"><span>⚠</span><span><strong>${nm}</strong> — ${n} negócios num único dia (${new Date(dy).toLocaleDateString('pt-PT',{day:'2-digit',month:'short'})}). Possível acumulação.</span></div>`;}).join('');
+  // Seller chart
+  const top12=sc.slice(0,12); const h=Math.max(260,top12.length*36+50);
+  document.getElementById('seller-wrap').style.height=h+'px';
+  if(ch.s)ch.s.destroy();
+  ch.s=new Chart(document.getElementById('c-seller'),{type:'bar',data:{labels:top12.map(s=>s.name.split(' ').slice(0,2).join(' ')),datasets:[{data:top12.map(s=>s.count),backgroundColor:'#3b82f6',borderRadius:3,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.raw} neg.`}}},scales:{x:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#666'}},y:{grid:{display:false},ticks:{color:'#bbb',font:{size:12}}}}}});
+  // Timeline chart
+  const byDay={}; for(const d of deals){const k=d.date.toLocaleDateString('pt-PT',{day:'2-digit',month:'short'});if(!byDay[k])byDay[k]={count:0,ts:d.date};byDay[k].count++;}
+  const sorted=Object.entries(byDay).sort((a,b)=>a[1].ts-b[1].ts); const mx2=Math.max(...sorted.map(x=>x[1].count));
+  if(ch.t)ch.t.destroy();
+  ch.t=new Chart(document.getElementById('c-time'),{type:'bar',data:{labels:sorted.map(x=>x[0]),datasets:[{data:sorted.map(x=>x[1].count),backgroundColor:sorted.map(x=>x[1].count>=mx2*.7?'#f59e0b':'#10b981'),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.raw} neg.`}}},scales:{x:{grid:{display:false},ticks:{color:'#666',autoSkip:false,maxRotation:45,font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#666'}}}}});
+  // Table
+  const now=new Date(),ms2=new Date(now.getFullYear(),now.getMonth(),1),ls2=new Date(now.getFullYear(),now.getMonth()-1,1);
+  const tc={},lc={}; for(const d of all){if(d.date>=ms2)tc[d.sender]=(tc[d.sender]||0)+1;else if(d.date>=ls2)lc[d.sender]=(lc[d.sender]||0)+1;}
+  const maxC=sc[0]?.count||1;
+  document.getElementById('t-body').innerHTML=sc.map((s,i)=>{const t=tc[s.email]||0,l=lc[s.email]||0;const[tr,tc2]=t>l?['↑','#10b981']:t<l?['↓','#ef4444']:['→','#555'];return`<tr><td class="t-rank">${i+1}</td><td class="t-name">${s.name}</td><td class="t-email">${s.email.replace('@caetano.pt','').replace('@bmw.caetano.pt','')}</td><td class="t-count">${s.count}</td><td class="t-trend" style="color:${tc2}">${tr}</td><td class="bar-col"><div class="bar"><div class="bar-fill" style="width:${Math.round(s.count/maxC*100)}%"></div></div></td></tr>`;}).join('');
+}
+
+function show(id){document.getElementById('loading').style.display=id==='loading'?'flex':'none';document.getElementById('error-box').style.display=id==='error'?'block':'none';document.getElementById('dashboard').style.display=id==='dashboard'?'block':'none';}
+
+loadData();
+</script>
+</body>
+</html>
